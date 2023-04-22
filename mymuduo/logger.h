@@ -46,7 +46,7 @@ class Logger : private noncopyable {
 public:
     static Logger& getInstance();
     void setLogLevel(int level);
-    void log(std::string msg);
+    void log(std::string msg)const ;
 
 private:
     int m_logLevel;
