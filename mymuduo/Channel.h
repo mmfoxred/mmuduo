@@ -31,7 +31,7 @@ public:
     // 获取信息 设置信息
     int get_fd() const { return this->m_fd; }
     int get_events() const { return this->m_events; }
-    int set_revents(int revents) { m_revents = revents; }
+    void set_revents(int revents) { m_revents = revents; }
     int get_index() const { return this->m_index; }
     void set_index(int index) { m_index = index; }
     EventLoop* ownerLoop() const { return this->m_loop; }
