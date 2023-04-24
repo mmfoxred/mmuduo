@@ -7,7 +7,7 @@ CXXFLAGS:= -std=c++11 -w -fPIC
 
 
 $(TARGET):$(OBJS)
-	echo $(OBJS)
+# 	echo $(OBJS)
 	-$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LIBS) -o ./build/$(TARGET)
 	-@$(RM) $(OBJS)
 
