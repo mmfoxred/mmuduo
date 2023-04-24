@@ -10,6 +10,11 @@
 
 class EventLoop;
 
+/*
+Channel：
+    1.封装成感兴趣的事件，<fd:events>，可以读取/设置事件,但不设置到内核epoll事件集合中
+    2.处理Poller返回的事件
+*/
 class Channel : private noncopyable {
 public:
     using EventCallBack = std::function<void()>;
@@ -73,7 +78,7 @@ private:
     EventLoop* m_loop;
     const int m_fd;  // 要监听的fd
     int m_events;    // 感兴趣的事件
-    int m_revents;   // Poller返回的发生的事件
+    int m_revents;   // Poller中返回的发生的事件
     int m_index;
 
     // 监听该是否channel是否被手动remove了

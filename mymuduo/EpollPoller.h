@@ -25,9 +25,9 @@ private:
     void update(int op, Channel* channel);
     // 填写 返回的有事件的连接
     void fillActiveChannels(int eventNums, ChannelList* activeChannels) const;
-
+    //? Channel的revents已经在里面设置了,这里传ChannelList*可能是还需要用到activeChannels.
     int m_epollfd;  // epoll_create 创建的内核事件表的标识
 
     using EventList = std::vector<epoll_event>;
-    EventList m_reventList;  // 存储返回的发生的感兴趣事件
+    EventList m_reventList; // 存储返回的发生的感兴趣事件
 };

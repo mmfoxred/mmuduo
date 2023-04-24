@@ -7,6 +7,12 @@
 class EventLoop;
 class Channel;
 
+/*
+Poller:
+    1.封装epoll_create
+    2.封装epoll_ctl
+    3.封装epoll_wait
+*/
 class Poller {
 public:
     using ChannelList = std::vector<Channel*>;
