@@ -21,7 +21,7 @@ public:
     virtual void removeChannel(Channel* channel) = 0;  //epoll_ctl
     virtual void updateChannel(Channel* channel) = 0;  //epoll_ctl
     virtual Timestamp poll(int timeoutMs,
-                           Channel* activeChannels) = 0;  //epoll_wait
+                           ChannelList* activeChannels) = 0;  //epoll_wait
 
 protected:
     //sockfd-Channel
