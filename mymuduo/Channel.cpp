@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "Logger.h"
+#include "EventLoop.h"
 
 Channel::Channel(EventLoop* loop, int fd)
     : m_loop(loop), m_fd(fd), m_events(0), m_revents(0), m_index(0), m_tied(false) {}
@@ -14,7 +15,7 @@ Channel::~Channel() {
 }
 
 void Channel::remove() {
-    // m_loop->removeChannel(this);
+    m_loop->removeChannel(this);
 }
 
 void Channel::handleEvent(Timestamp receiveTime) {
@@ -35,7 +36,7 @@ void Channel::tie(const std::shared_ptr<void>& obj) {
 }
 
 void Channel::update() {
-    // m_loop->updateChannel(this);
+    m_loop->updateChannel(this);
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime) {

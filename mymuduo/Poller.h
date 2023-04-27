@@ -20,7 +20,7 @@ public:
     Poller(EventLoop* loop);  // epoll_create
     virtual ~Poller() = default;
 
-    // 提供具体实例
+    // 提供具体实例 单例模式
     static Poller* newDefaultPoller(EventLoop* loop);
     // 判断某channel是否注册到了Poller中
     bool hasChannel(Channel* channel) const;
