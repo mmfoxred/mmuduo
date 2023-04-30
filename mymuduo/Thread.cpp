@@ -24,6 +24,7 @@ Thread::~Thread() {
     }
 }
 
+//启动线程
 void Thread::start() {
     m_started = true;
     sem_t sem;
