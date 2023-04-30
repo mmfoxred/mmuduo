@@ -22,9 +22,12 @@ EventLoopThread::~EventLoopThread() {
     }
 }
 
+//以下这两个函数就是实现 one loop per thread 的部分
+
 //启动新的事件循环，并返回该事件循环指针
 EventLoop* EventLoopThread::startLoop() {
     m_thread.start();  //启动一个新的线程
+    //在自动调用线程创建对应的事件循环后，取得该事件循环的指针 （所以threadFunc是个private函数，是供startLoop调用的）
     EventLoop* tmp_loop = nullptr;
     {
         std::unique_lock<std::mutex> lock(m_mutex);
@@ -36,7 +39,7 @@ EventLoop* EventLoopThread::startLoop() {
     return tmp_loop;
 }
 
-// 下面这个方法，实在单独的新线程里面运行的
+//线程需要执行的函数，作为线程的初始化变量
 void EventLoopThread::threadFunc() {
     EventLoop loop;  //one loop per thread
     if (m_threadInitCallback) {
@@ -48,6 +51,7 @@ void EventLoopThread::threadFunc() {
         m_cond.notify_one();
     }
     loop.loop();  // EventLoop loop  => Poller.poll
+    //这里就是事件循环/线程返回了（结束了），那么就销毁该事件循环
     std::unique_lock<std::mutex> lock(m_mutex);
     m_loop = nullptr;
 }
