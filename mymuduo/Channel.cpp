@@ -4,11 +4,16 @@
 
 #include <memory>
 
-#include "Logger.h"
 #include "EventLoop.h"
+#include "Logger.h"
 
 Channel::Channel(EventLoop* loop, int fd)
-    : m_loop(loop), m_fd(fd), m_events(0), m_revents(0), m_index(0), m_tied(false) {}
+    : m_loop(loop),
+      m_fd(fd),
+      m_events(0),
+      m_revents(0),
+      m_index(0),
+      m_tied(false) {}
 
 Channel::~Channel() {
     // TODO

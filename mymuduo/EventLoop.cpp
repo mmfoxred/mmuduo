@@ -5,9 +5,14 @@
 #include "Poller.h"
 
 #include <sys/eventfd.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 //防止一个线程创建多个EventLoop
 thread_local EventLoop* t_loopInthisThread = nullptr;
@@ -51,4 +56,91 @@ EventLoop::~EventLoop() {
     ::close(m_wakeUpFd);
     //销毁本线程loop
     t_loopInthisThread = nullptr;
+}
+
+//开启事件循环
+void EventLoop::loop() {
+    m_looping = true;
+    m_quit = false;
+    LOG_INFO("EventLoop %p start looping\n", this);
+    while (!m_quit) {
+        m_activeChannels.clear();
+        m_pollReturnTime = m_poller->poll(kPollTimeMs, &m_activeChannels);
+        for (Channel* channel : m_activeChannels) {
+            channel->handleEvent(m_pollReturnTime);
+        }
+        doPendingFunctors();
+    }
+    LOG_INFO("EventLoop %p stop looping\n", this);
+    m_looping = false;
+}
+
+//退出事件循环
+void EventLoop::quit() {
+    m_quit = true;
+    if (!isInLoopThread()) {
+        wakeUp();
+    }
+}
+
+//在当前loop中执行cb
+void EventLoop::runInLoop(Functor cb) {
+    if (isInLoopThread()) {
+        cb();
+    } else {
+        queueInLoop(cb);
+    }
+}
+
+void EventLoop::queueInLoop(Functor cb) {
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_pendingFunctors.push_back(cb);
+    }
+    if (!isInLoopThread() || m_callingPendingFunctors) {
+        wakeUp();
+    }
+}
+
+void EventLoop::updateChannel(Channel* channel) {
+    m_poller->updateChannel(channel);
+}
+
+void EventLoop::removeChannel(Channel* channel) {
+    m_poller->removeChannel(channel);
+}
+
+bool EventLoop::hasChannel(Channel* channel) {
+    return m_poller->hasChannel(channel);
+}
+
+//唤醒wake所在的线程
+void EventLoop::wakeUp() {
+    uint64_t one = 1;
+    ssize_t ret = write(m_wakeUpFd, &one, sizeof(one));
+    if (ret != sizeof(one)) {
+        LOG_ERROR("EventLoop::wakeup writes %lu bytes instead of 8 \n", ret);
+    }
+}
+
+void EventLoop::handRead() {
+    uint64_t one = 1;
+    ssize_t ret = read(m_wakeUpFd, &one, sizeof(one));
+    if (ret != sizeof(one)) {
+        LOG_ERROR("EventLoop::handRead reads %lu bytes instead of 8 \n", ret);
+    }
+}
+
+//执行回调
+void EventLoop::doPendingFunctors() {
+    m_callingPendingFunctors = true;
+    std::vector<Functor> functors;
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        functors.swap(m_pendingFunctors);
+    }
+    for (const Functor& functor : functors) {
+        functor();
+    }
+    m_callingPendingFunctors = false;
 }
