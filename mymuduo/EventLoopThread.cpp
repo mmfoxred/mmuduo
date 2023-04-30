@@ -9,7 +9,7 @@ EventLoopThread::EventLoopThread(const ThreadInitCallback& initCallback,
     : m_threadInitCallback(initCallback),
       m_exiting(false),
       m_loop(nullptr),
-      m_thread(std::bind(&EventLoopThread::threadFunc, this), name),
+      m_thread(std::bind(&EventLoopThread::threadFunc, this), name),  //传给线程
       m_mutex(),
       m_cond() {}
 
