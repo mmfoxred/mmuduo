@@ -36,7 +36,7 @@ EventLoop* EventLoopThread::startLoop() {
         }
         tmp_loop = m_loop;
     }
-    return tmp_loop;
+    return tmp_loop ;
 }
 
 //线程需要执行的函数，作为线程的初始化变量
