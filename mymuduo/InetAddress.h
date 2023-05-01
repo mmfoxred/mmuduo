@@ -5,7 +5,7 @@
 
 class InetAddress {
 public:
-    explicit InetAddress(short port, std::string ipv4 = "127.0.0.1");
+    explicit InetAddress(short port=6000, std::string ipv4 = "127.0.0.1");
     explicit InetAddress(const sockaddr_in &addr);
 
     std::string toIp() const;
