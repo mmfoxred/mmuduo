@@ -10,12 +10,12 @@
 class EventLoop;
 class EventLoopThread;
 
-class EventLoopThreadLoop : private noncopyable {
+class EventLoopThreadPool : private noncopyable {
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;
 
-    EventLoopThreadLoop(EventLoop* baseLoop, const std::string& name);
-    ~EventLoopThreadLoop() = default;
+    EventLoopThreadPool(EventLoop* baseLoop, const std::string& name);
+    ~EventLoopThreadPool() = default;
 
     void set_threadNum(int num) { m_numThread = num; }
     void start(const ThreadInitCallback & cb);
