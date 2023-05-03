@@ -10,6 +10,7 @@
 #include "Acceptor.h"
 #include "Callbacks.h"
 #include "EventLoop.h"
+#include "EventLoopThread.h"
 #include "EventLoopThreadPool.h"
 #include "InetAddress.h"
 #include "TcpConnection.h"
