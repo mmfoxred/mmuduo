@@ -5,15 +5,16 @@
 #include "EventLoop.h"
 #include "EventLoopThread.h"
 
-EventLoopThreadLoop::EventLoopThreadLoop(EventLoop* baseLoop,
+EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop,
                                          const std::string& name)
     : m_baseLoop(baseLoop),
       m_name(name),
       m_started(false),
       m_numThread(0),
-      m_next(0) {}
+      m_next(0) {
+}
 
-void EventLoopThreadLoop::start(const ThreadInitCallback& cb) {
+void EventLoopThreadPool::start(const ThreadInitCallback& cb) {
     m_started = true;
     for (int i = 0; i < m_numThread; i++) {
         char buf[m_name.size() + 32];
@@ -27,7 +28,7 @@ void EventLoopThreadLoop::start(const ThreadInitCallback& cb) {
     }
 }
 
-EventLoop* EventLoopThreadLoop::get_nextLoop() {
+EventLoop* EventLoopThreadPool::getNextLoop() {
     EventLoop* tmp_loop = m_baseLoop;
     if (!m_eventloops.empty()) {
         tmp_loop = m_eventloops[m_next];
@@ -39,7 +40,7 @@ EventLoop* EventLoopThreadLoop::get_nextLoop() {
     return tmp_loop;
 }
 
-std::vector<EventLoop*> EventLoopThreadLoop::getAllLoops() {
+std::vector<EventLoop*> EventLoopThreadPool::getAllLoops() {
     if (m_eventloops.empty()) {
         return {m_baseLoop};
     } else {

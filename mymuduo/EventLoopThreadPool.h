@@ -17,12 +17,12 @@ public:
     EventLoopThreadPool(EventLoop* baseLoop, const std::string& name);
     ~EventLoopThreadPool() = default;
 
-    void set_threadNum(int num) { m_numThread = num; }
-    void start(const ThreadInitCallback & cb);
-    EventLoop* get_nextLoop();
+    void setThreadNum(int num) { m_numThread = num; }
+    void start(const ThreadInitCallback& cb);
+    EventLoop* getNextLoop();
     std::vector<EventLoop*> getAllLoops();
     bool started() { return m_started; }
-    const std::string get_name() const { return m_name; }
+    const std::string getName() const { return m_name; }
 
 private:
     EventLoop* m_baseLoop;
