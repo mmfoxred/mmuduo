@@ -9,6 +9,7 @@ class TcpConnection;
 class Timestamp;
 class EventLoop;
 
+using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 using ThreadInitCallback = std::function<void(EventLoop*)>;
 using ConnectionPtr = std::shared_ptr<TcpConnection>;
 using ConnectionCallback = std::function<void(const ConnectionPtr&)>;
