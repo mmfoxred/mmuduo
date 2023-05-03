@@ -1,15 +1,8 @@
-#include <muduo/base/Timestamp.h>
-#include <muduo/net/Buffer.h>
-#include <muduo/net/Callbacks.h>
-#include <muduo/net/EventLoop.h>
-#include <muduo/net/InetAddress.h>
-#include <muduo/net/TcpServer.h>
+#include <mymuduo/TcpServer.h>
 #include <functional>
 #include <iostream>
 #include <string>
 using namespace std;
-using namespace muduo;
-using namespace muduo::net;
 using namespace placeholders;
 
 class ChatServer {
