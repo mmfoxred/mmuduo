@@ -6,7 +6,7 @@
 #include "EpollPoller.h"
 #include "Poller.h"
 
-Poller* newDefaultPoller(EventLoop* loop) {
+Poller* Poller::newDefaultPoller(EventLoop* loop) {
     if (::getenv("MUDUO_USE_POLL")) {
         return nullptr;  // 生成poll实例
     } else {
