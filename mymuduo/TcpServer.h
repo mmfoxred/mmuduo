@@ -24,7 +24,7 @@ public:
               const std::string& name, Option option = kNoReusePort);
     ~TcpServer();
 
-    void set_threadNum(int n);
+    void setThreadNum(int n);
     void start();
 
     void setThreadInitcallback(const ThreadInitCallback& cb) {

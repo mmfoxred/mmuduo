@@ -38,7 +38,7 @@ TcpServer::~TcpServer() {
     }
 }
 
-void TcpServer::set_threadNum(int n) {
+void TcpServer::setThreadNum(int n) {
     m_threadPool->setThreadNum(n);
 }
 
