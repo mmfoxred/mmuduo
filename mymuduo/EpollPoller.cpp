@@ -85,12 +85,12 @@ Timestamp EpollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
 }
 
 void EpollPoller::update(int op, Channel* channel) {
-    epoll_event events;
-    bzero(&events, sizeof(epoll_event));
-    events.events = channel->get_events();
-    events.data.ptr = channel;
+    epoll_event event;
+    bzero(&event, sizeof(epoll_event));
+    event.events = channel->get_events();
+    event.data.ptr = channel;
     int fd = channel->get_fd();
-    if (::epoll_ctl(m_epollfd, op, fd, &events) < 0) {
+    if (::epoll_ctl(m_epollfd, op, fd, &event) < 0) {
         if (op == EPOLL_CTL_DEL) {
             LOG_ERROR("epoll_ctl del errno %d\n", errno);
         } else {
