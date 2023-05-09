@@ -3,6 +3,7 @@
 
 #include <string>
 
+//封装了socket地址
 class InetAddress {
 public:
     explicit InetAddress(std::string ipv4 = "127.0.0.1", short port = 6000);

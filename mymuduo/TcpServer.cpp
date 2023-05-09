@@ -21,6 +21,7 @@ TcpServer::TcpServer(EventLoop* loop, const InetAddress& listenAddr,
       m_acceptor(new Acceptor(loop, listenAddr, option == kReusePort)),
       m_threadPool(new EventLoopThreadPool(loop, name)),
       m_nextConnId(1) {
+	  //对::accept()得到的新连接进行处理 的回调函数 TcpServer::newConnection
     m_acceptor->setNewConnectionCallback(std::bind(&TcpServer::newConnection,
                                                    this, std::placeholders::_1,
                                                    std::placeholders::_2));
@@ -44,19 +45,33 @@ void TcpServer::setThreadNum(int n) {
 
 void TcpServer::start() {
     if (m_started_n++ == 0) {
+		//创建numThread个线程，并形成<EventLoop:EventLoopThread 1:1>的ThreadPool
+		//并且其中的EventLoop都已经开启了事件循环 EventLoop::loop()
+		//但是目前还没有事件注册，需要Acceptor接收到新连接 or 其他情况才注册事件
         m_threadPool->start(m_threadInitCallback);
+		//开启::listen()，并注册poller(epoll)读事件
         m_baseLoop->runInLoop(std::bind(&Acceptor::listen, m_acceptor.get()));
     }
 }
 
-// 有一个新的客户端的连接，acceptor会执行这个回调操作
+
+/* 
+作用：
+根据新连接的情况建立TcpConnection对象
+对TcpConnection对象设置回调，这些回调都是给channel的、
+注册该连接中channel事件到Poller中、
+执行 TcpConnection::connectEstablished() 
+-> channel->tie() + enableReading() + ChatServer::onConnection 输出该新连接信息
+此时已经向新连接添加了读事件，也交给了一个EventLoop处理了
+*/
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
     // 轮询算法，选择一个subLoop，来管理channel
     EventLoop* ioLoop = m_threadPool->getNextLoop();
     char buf[64] = {0};
     snprintf(buf, sizeof buf, "-%s#%d", m_ipPort.c_str(), m_nextConnId);
     ++m_nextConnId;  //这里不需要原子是因为该函数只在mainLoop中运行，不存在竞争关系
-    std::string connName = m_name + buf;
+	//connName 是 TcpServer name + ipv4:port + 连接序号
+	std::string connName = m_name + buf;
 
     LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s \n",
              m_name.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
@@ -75,16 +90,21 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
                                             sockfd,  // Socket Channel
                                             localAddr, peerAddr));
     m_connections[connName] = conn;
-    // 下面的回调都是用户设置给TcpServer=>TcpConnection=>Channel=>Poller=>notify channel调用回调
-    conn->setConnectionCallback(m_connectionCallback);
-    conn->setMessageCallback(m_messageCallback);
-    conn->setWriteCompleteCallback(m_writeCompleteCallback);
 
+
+    // 下面的回调都是用户设置给TcpServer=>TcpConnection=>Channel=>Poller=>notify channel调用回调
+	//来源：ChatServer::m_server.setConnectionCallback(ChatServer::onConnection) -> TcpServer::newConnection()
+	//-> conn->setConnectionCallback() 
+	//-> 当执行TcpConnection::handleRead/handleWrite时会调用，不是直接传给Channel的
+	//传的是是TcpConnection::handleRead/handleWrite
+	conn->setConnectionCallback(m_connectionCallback);
+    conn->setMessageCallback(m_messageCallback); //这个和上面的一样
+    conn->setWriteCompleteCallback(m_writeCompleteCallback);
     // 设置了如何关闭连接的回调   conn->shutDown()
     conn->setCloseCallback(
         std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
 
-    // 直接调用TcpConnection::connectEstablished
+    // channel->tie() enableReading() + 执行ChatServer::onConnection
     ioLoop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn));
 }
 

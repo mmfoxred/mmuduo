@@ -4,7 +4,7 @@
 
 class InetAddress;
 
-// 封装socket fd
+// 封装了socket fd，及其常用函数，如bind listen accept shutdown
 class Socket : noncopyable {
 public:
     explicit Socket(int sockfd) : m_sockfd(sockfd) {}

@@ -10,6 +10,7 @@
 class EventLoop;
 class EventLoopThread;
 
+//线程+事件循环（EventLoopThread）池，创建并维护着多个EventLoopThread成员
 class EventLoopThreadPool : private noncopyable {
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;

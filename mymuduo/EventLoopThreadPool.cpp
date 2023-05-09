@@ -19,12 +19,15 @@ void EventLoopThreadPool::start(const ThreadInitCallback& cb) {
     for (int i = 0; i < m_numThread; i++) {
         char buf[m_name.size() + 32];
         snprintf(buf, sizeof(buf), "%s%d", m_name.c_str(), i);
-        EventLoopThread* t = new EventLoopThread(cb, buf);
-        m_eventLoopThreads.push_back(std::unique_ptr<EventLoopThread>(t));
-        m_eventloops.push_back(t->startLoop());
+       
+		//顺序地放入对应的容器中，那么每个位置的EventLoop 和 EventLoopThread 配对
+		EventLoopThread* t = new EventLoopThread(cb, buf);
+		m_eventLoopThreads.push_back(std::unique_ptr<EventLoopThread>(t));
+        m_eventloops.push_back(t->startLoop()); //这里才是真正的创建线程的时候，会调用Thread::start()->std::thread()
     }
+	//如果没有设置线程个数，那么只有mainLoop一个线程
     if (m_numThread == 0 && cb) {
-        cb(m_baseLoop);
+        cb(m_baseLoop); //那就只能对该loop进行处理了
     }
 }
 

@@ -12,8 +12,9 @@ class EventLoop;
 
 /*
 Channel：
-    1.封装成感兴趣的事件，<fd:events>，可以读取/设置事件,但不设置到内核epoll事件集合中
-    2.处理Poller返回的事件
+    1.封装成感兴趣的事件，<fd:events>；
+    可以读取/设置事件,但不设置到内核epoll事件集合中，设置要交给Poller进行epoll_ctl
+    2.处理Poller返回的事件 Poller->EventLoop->Channel
 */
 class Channel : private noncopyable {
 public:
@@ -26,7 +27,11 @@ public:
 
     // Channel得到Poller的事件返回后，进行处理
     void handleEvent(Timestamp receiveTime);
-    // 设置回调函数
+    /*来源：
+    ChatServer::自己编的回调函数          -> TcpServer::set...Callback
+    -> TcpServer::newConnection() -> conn.setConnectionCallback()
+	-> TcpConnection构造函数就会设置
+    */
     void setReadCallBack(ReadEventCallBack cb) { m_readCallBack = std::move(cb); }
     void setWriteCallBack(EventCallBack cb) { m_writeCallBack = std::move(cb); }
     void setErrorCallBack(EventCallBack cb) { m_errorCallBack = std::move(cb); }
@@ -40,10 +45,11 @@ public:
     int get_index() const { return this->m_index; }
     void set_index(int index) { m_index = index; }
     EventLoop* ownerLoop() const { return this->m_loop; }
-    // 设置fd的事件
+
+	// 设置fd的事件
     void enableReading() {
         m_events |= kReadEvent;
-        update();
+        update(); //注明了调用次序
     }
     void disableReading() {
         m_events &= ~kReadEvent;
@@ -61,13 +67,15 @@ public:
         m_events = kNoneEvent;
         update();
     }
+	
     // 获取fd的事件
     bool isNoneEvent() { return m_events == kNoneEvent; }
     bool isReading() { return m_events & kReadEvent; }
     bool isWriting() { return m_events & kWriteEvent; }
 
 private:
-    void update();
+	
+    void update(); 
     void handleEventWithGuard(Timestamp receiveTime);
 
     // 事件监听相关

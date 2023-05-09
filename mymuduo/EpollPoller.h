@@ -7,6 +7,12 @@
 
 class EventLoop;
 
+/*
+Poller:封装Epoll相关操作
+    1.封装epoll_create
+    2.封装epoll_ctl
+    3.封装epoll_wait
+*/
 class EpollPoller : public Poller {
 public:
     EpollPoller(EventLoop* loop);  // epoll_create

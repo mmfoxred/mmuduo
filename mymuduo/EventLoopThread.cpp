@@ -24,9 +24,10 @@ EventLoopThread::~EventLoopThread() {
 
 //以下这两个函数就是实现 one loop per thread 的部分
 
-//启动新的事件循环，并返回该事件循环指针
+//创建新的线程，并创建属于它的新事件循环，返回该事件循环指针，并开启该事件循环
 EventLoop* EventLoopThread::startLoop() {
-    m_thread.start();  //启动一个新的线程
+	//调用std::thread创建一个新线程
+    m_thread.start();   
     //在自动调用线程创建对应的事件循环后，取得该事件循环的指针 （所以threadFunc是个private函数，是供startLoop调用的）
     EventLoop* tmp_loop = nullptr;
     {
@@ -39,7 +40,15 @@ EventLoop* EventLoopThread::startLoop() {
     return tmp_loop ;
 }
 
-//线程需要执行的函数，作为线程的初始化变量
+/*
+作用：
+自己新建一个loop，保存为m_loop
+调用外部传入的m_threadInitCallback处理该loop
+（虽然这里没有传入m_threadInitCallback，那么不对loop进行任何处理）
+将该loop返回，经由EventLoopThread::threadFunc() -> EventLoopThread::startLoop()
+->EventLoopThreadPool::start() -> m_eventloops.push_back(t->startLoop()) 保存起来
+开启事件循环
+*/
 void EventLoopThread::threadFunc() {
     EventLoop loop;  //one loop per thread
     if (m_threadInitCallback) {

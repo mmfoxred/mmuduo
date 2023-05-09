@@ -9,6 +9,8 @@
 
 std::atomic_int Thread::m_numCount(0);
 
+//调用std::Thread 创建新线程
+//并调用回调m_funcs(); （即EventLoopThread::threadFunc()） 生成属于它的事件循环，并开启该循环
 Thread::Thread(ThreadFunc func, const std::string& name)
     : m_started(false),
       m_joined(false),
@@ -24,7 +26,7 @@ Thread::~Thread() {
     }
 }
 
-//启动线程
+//创建线程，并生成属于它的EventLoop，返回它。然后开启该loop
 void Thread::start() {
     m_started = true;
     sem_t sem;
@@ -33,8 +35,10 @@ void Thread::start() {
     m_thread = std::shared_ptr<std::thread>(new std::thread([&]() {
         m_tid = CurrentThread::getTid();
         sem_post(&sem);
-        m_funcs();
+        m_funcs(); //是EventLoopThread::threadFunc()
     }));
+
+	//等待线程执行完
     sem_wait(&sem);
 }
 

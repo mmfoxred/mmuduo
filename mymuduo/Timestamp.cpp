@@ -7,6 +7,7 @@ Timestamp::Timestamp() : m_secondSinceEpoch(0) {}
 Timestamp::Timestamp(long secondsSinceEpoch)
     : m_secondSinceEpoch(secondsSinceEpoch) {}
 
+//返回是其实还是一个long型时间戳，需要toString()的转换
 Timestamp Timestamp::now() { return Timestamp(time(NULL)); }
 
 // 这个是给连续调用使用的，不用关心是否是当前的时间

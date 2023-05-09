@@ -33,10 +33,10 @@ int Socket::accept(InetAddress* peeraddr) {
      * poller + non-blocking IO
      */
     sockaddr_in addr;
-    socklen_t len = sizeof addr;
+    socklen_t len = sizeof addr;  //需要初始化大小，再传进去
     bzero(&addr, sizeof addr);
     int connfd = ::accept4(m_sockfd, (sockaddr*)&addr, &len,
-                           SOCK_NONBLOCK | SOCK_CLOEXEC);
+                           SOCK_NONBLOCK | SOCK_CLOEXEC);  //顺便设置非阻塞，或者使用fcntl
     if (connfd >= 0) {
         peeraddr->setSockAddr(addr);
     }

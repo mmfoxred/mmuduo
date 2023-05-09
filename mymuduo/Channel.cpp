@@ -23,6 +23,20 @@ void Channel::remove() {
     m_loop->removeChannel(this);
 }
 
+/*
+Caller：
+EventLoop::loop()-> 调用了channel.handleEvent(m_pollReturnTime)来处理
+该函数不是作为回调函数来使用的
+
+
+调用次序：
+Channel::handleEvent()->判断该channel是否被remove了->handleEventWithGuard()->判断事件类型，如EPOLLIN EPOLLOUT EPOLLHUP...
+->调用回调函数，如m_readCallBack()...
+这些回调函数不是构造函数传入的，而是外部调用Channel::setReadCallBack()传进来的，。
+如 m_acceptChannel.setReadCallBack(std::bind(&Acceptor::handleRead, this)); 设置了读事件
+
+?为什么handleRead()没有Timestamp参数也行，不是定义了ReadEventCallBack是有参数的函数嘛
+*/
 void Channel::handleEvent(Timestamp receiveTime) {
     if (m_tied) {
         std::shared_ptr<void> guard = m_tie.lock();
@@ -30,16 +44,19 @@ void Channel::handleEvent(Timestamp receiveTime) {
             handleEventWithGuard(receiveTime);
         }
     } else {
-        handleEvent(receiveTime);
+        handleEventWithGuard(receiveTime);
     }
 }
 
-// 在TcpConnect建立时，会进行tie
+// 在TcpConnect建立时，会进行tie，绑定的也是TcpConnection对象指针
 void Channel::tie(const std::shared_ptr<void>& obj) {
     m_tie = obj;
     m_tied = true;
 }
 
+//调用次序：Channel::update()->通过绑定的Eventloop中转到Poller EpollPoller
+//->EpollPoller::updateChannel->改channel.index + EpollPoller::m_channel_map + EpollPoller::update
+//->epoll_ctl实际更新，这里的m_events会在EpollPoller::update中通过get_events()读取
 void Channel::update() {
     m_loop->updateChannel(this);
 }
