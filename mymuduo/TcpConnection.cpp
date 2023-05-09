@@ -50,6 +50,7 @@ TcpConnection::~TcpConnection() {
              m_channel->get_fd(), (int)m_state);
 }
 
+//实际调用的是TcpConnection::sendInLoop
 void TcpConnection::send(const std::string& buf) {
     if (m_state == kConnected) {
         if (m_eventLoop->isInLoopThread()) {
@@ -104,7 +105,8 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
     if (!faultError && remaining > 0) {
         // 目前发送缓冲区剩余的待发送数据的长度
         size_t oldLen = m_outputBuffer.readableBytes();
-        if (oldLen + remaining >= m_highWaterMark && oldLen < m_highWaterMark &&
+		//触发了高水位情况
+		if (oldLen + remaining >= m_highWaterMark && oldLen < m_highWaterMark &&
             m_highWaterMarkCallback) {
             m_eventLoop->queueInLoop(std::bind(m_highWaterMarkCallback,
                                                shared_from_this(),
@@ -112,13 +114,12 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
         }
         m_outputBuffer.append((char*)data + nwrote, remaining);
         if (!m_channel->isWriting()) {
-            m_channel
-                ->enableWriting();  // 这里一定要注册channel的写事件，否则poller不会给channel通知epollout
+            m_channel->enableWriting();  // 这里一定要注册channel的写事件，否则poller不会给channel通知epollout
         }
     }
 }
 
-// 关闭连接
+// 关闭连接，都是关闭写端来关闭连接的
 void TcpConnection::shutdown() {
     if (m_state == kConnected) {
         setState(kDisconnecting);
@@ -134,10 +135,11 @@ void TcpConnection::shutdownInLoop() {
 }
 
 // 连接建立
+//执行 Channel::tie() + Channel::enableReading 注册EPOLLIN事件 + 执行m_connectionCallback外部传入的回调
 void TcpConnection::connectEstablished() {
     setState(kConnected);
     m_channel->tie(shared_from_this());
-    m_channel->enableReading();  // 向poller注册channel的epollin事件
+    m_channel->enableReading();  // 向poller注册channel的EPOLLIN事件
 
     // 新连接建立，执行回调
     m_connectionCallback(shared_from_this());
@@ -154,6 +156,14 @@ void TcpConnection::connectDestroyed() {
     m_channel->remove();  // 把channel从poller中删除掉
 }
 
+/*
+传给Channel的可读回调事件
+当Poller->poll()返回时，收到EPOLLIN事件，就会调用Channel执行该回调函数
+作用：
+	1.读取可读事件中fd发送的数据
+	2.调用ChatServer::m_messageCallback() 对这些数据进行处理
+	3.recv的各种判断处理 retSize == n等情况
+*/
 void TcpConnection::handleRead(Timestamp receiveTime) {
     int savedErrno = 0;
     ssize_t n = m_inputBuffer.readFd(m_channel->get_fd(), &savedErrno);
@@ -172,12 +182,17 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
 void TcpConnection::handleWrite() {
     if (m_channel->isWriting()) {
         int savedErrno = 0;
+		//写完整个readableBytes
         ssize_t n = m_outputBuffer.writeFd(m_channel->get_fd(), &savedErrno);
         if (n > 0) {
-            m_outputBuffer.retrieve(n);
-            if (m_outputBuffer.readableBytes() == 0) {
-                m_channel->disableWriting();
-                if (m_writeCompleteCallback) {
+			//置位readIndex,handleRead()中也有置位操作，但是封装在readFd()中
+            m_outputBuffer.retrieve(n); 
+
+			//外部可读大小为0，表示读完了
+			if (m_outputBuffer.readableBytes() == 0) {
+                m_channel->disableWriting(); //那么就取消写事件
+				//如果注册了写完成事件，还可以处理
+				if (m_writeCompleteCallback) {
                     // 唤醒m_eventLoop对应的thread线程，执行回调
                     m_eventLoop->queueInLoop(
                         std::bind(m_writeCompleteCallback, shared_from_this()));
@@ -195,7 +210,6 @@ void TcpConnection::handleWrite() {
     }
 }
 
-// poller => channel::closeCallback => TcpConnection::handleClose
 void TcpConnection::handleClose() {
     LOG_INFO("TcpConnection::handleClose fd=%d state=%d \n",
              m_channel->get_fd(), (int)m_state);
@@ -204,8 +218,7 @@ void TcpConnection::handleClose() {
 
     TcpConnectionPtr connPtr(shared_from_this());
     m_connectionCallback(connPtr);  // 执行连接关闭的回调
-    m_closeCallback(
-        connPtr);  // 关闭连接的回调  执行的是TcpServer::removeConnection回调方法
+    m_closeCallback(connPtr);  // 关闭连接的回调  执行的是TcpServer::removeConnection回调方法
 }
 
 void TcpConnection::handleError() {

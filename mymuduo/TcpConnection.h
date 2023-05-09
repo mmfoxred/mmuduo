@@ -67,6 +67,7 @@ private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
     void setState(StateE state) { m_state = state; }
 
+	//传给Channel的回调，在TcpConnection构造函数中使用
     void handleRead(Timestamp receiveTime);
     void handleWrite();
     void handleClose();
@@ -81,18 +82,19 @@ private:
     std::atomic_int m_state;
     bool m_isReading;
 
-    // 这里和Acceptor类似   Acceptor=》mainLoop    TcpConenction=》subLoop
     std::unique_ptr<Socket> m_socket;
     std::unique_ptr<Channel> m_channel;
 
     const InetAddress m_localAddr;
     const InetAddress m_peerAddr;
 
-    ConnectionCallback m_connectionCallback;  // 有新连接时的回调
-    MessageCallback m_messageCallback;        // 有读写消息时的回调
-    WriteCompleteCallback m_writeCompleteCallback;  // 消息发送完成以后的回调
+	//前四个是外部传进来的，外部 -> TcpServer -> TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
+    ConnectionCallback m_connectionCallback; 
+    MessageCallback m_messageCallback; 
+    WriteCompleteCallback m_writeCompleteCallback;
     HighWaterMarkCallback m_highWaterMarkCallback;
-    CloseCallback m_closeCallback;
+	//实际是TcpServer::removeConnection，也是TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
+	CloseCallback m_closeCallback;
     size_t m_highWaterMark;
 
     Buffer m_inputBuffer;   // 接收数据的缓冲区

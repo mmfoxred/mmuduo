@@ -4,9 +4,10 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-/**
- * 从fd上读取数据  Poller工作在LT模式
- * Buffer缓冲区是有大小的！ 但是从fd上读数据的时候，却不知道tcp数据最终的大小
+/*
+作用：
+	从fd上读取数据  存入writableBytes()中；Poller工作在LT模式，所以要一次读完，不然会多次触发读事件。
+	使用extrabuf就是防止一次读不完。
  */
 ssize_t Buffer::readFd(int fd, int* saveErrno) {
     char extrabuf[65536] = {0};  // 栈上的内存空间  64K
@@ -38,6 +39,7 @@ ssize_t Buffer::readFd(int fd, int* saveErrno) {
     return n;
 }
 
+//调用write向fd写readableBytes中的数据
 ssize_t Buffer::writeFd(int fd, int* saveErrno) {
     ssize_t n = ::write(fd, peek(), readableBytes());
     if (n < 0) {
