@@ -36,7 +36,10 @@ private:
             // m_loop->quit();
         }
     }
-    //用户读写事件的回调 epoll_wait sockfd recv send
+
+	//服务器处理的事件：读写事件，其中除了新连接（mainLoop中运行）
+	//还有普通读写事件需要处理，那就交给这里了（subLoop）
+    //用户读写事件的回调
     void onMessage(const TcpConnectionPtr& conn, Buffer* buffer,
                    Timestamp time) {
         string buf = buffer->retrieveAllAsString();
