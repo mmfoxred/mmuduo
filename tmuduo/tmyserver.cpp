@@ -5,6 +5,7 @@
 using namespace std;
 using namespace placeholders;
 
+
 class ChatServer {
 public:
     ChatServer(EventLoop* loop, const InetAddress& listenAddr,
@@ -43,12 +44,12 @@ private:
         conn->send(buf);
     }
     TcpServer m_server;
-    EventLoop* m_loop;
+    EventLoop* m_loop; //mainLoop
 };
 
 int main() {
-    EventLoop loop;
-    InetAddress addr("127.0.0.1", 6000);
+    EventLoop loop; //主事件循环 mainLoop
+    InetAddress addr("127.0.0.1", 6000); //服务器要监听的地址
     ChatServer server(&loop, addr, "ChatServer");
     server.start();
     loop.loop();  //相当于epoll_wait
