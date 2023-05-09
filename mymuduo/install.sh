@@ -31,4 +31,4 @@ cp `pwd`/build/libmymuduo.so /usr/lib/mymuduo/
 
 #刷新缓存
 export LD_LIBRARY_PATH=/usr/lib/mymuduo:$LD_LIBRARY_PATH
-ldconfig
+sudo ldconfig -v
