@@ -79,9 +79,9 @@ private:
     void handleEventWithGuard(Timestamp receiveTime);
 
     // 事件监听相关
-    const static int kNoneEvent = 0;                   // 没有注册事件
-    const static int kReadEvent = EPOLLIN | EPOLLPRI;  // 注册了读事件
-    const static int kWriteEvent = EPOLLOUT;           // 注册了写事件
+    const static int kNoneEvent;                   // 没有注册事件
+    const static int kReadEvent;  // 注册了读事件
+    const static int kWriteEvent;           // 注册了写事件
 
     EventLoop* m_loop;
     const int m_fd;  // 要监听的fd

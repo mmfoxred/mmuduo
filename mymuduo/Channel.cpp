@@ -7,6 +7,10 @@
 #include "EventLoop.h"
 #include "Logger.h"
 
+const int Channel::kNoneEvent = 0;                   // 没有注册事件
+const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;  // 注册了读事件
+const int Channel::kWriteEvent = EPOLLOUT;           // 注册了写事件
+
 Channel::Channel(EventLoop* loop, int fd)
     : m_loop(loop),
       m_fd(fd),
