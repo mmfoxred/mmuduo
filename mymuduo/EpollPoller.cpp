@@ -12,12 +12,14 @@
 #include "Poller.h"
 #include "Timestamp.h"
 
-const int kNew = -1;     // channel尚未添加到Poller中(即有没有被监听)
-const int kAdded = 1;    // channel已添加到Poller中
+const int kNew = -1;   // channel尚未添加到Poller中(即有没有被监听)
+const int kAdded = 1;  // channel已添加到Poller中
 const int kDeleted = 2;  // channel已从Poller中删除
 
 EpollPoller::EpollPoller(EventLoop* loop)
-    : Poller(loop), m_epollfd(epoll_create1(EPOLL_CLOEXEC)), m_reventList(KInitEventListSize) {
+    : Poller(loop),
+      m_epollfd(::epoll_create1(EPOLL_CLOEXEC)),
+      m_reventList(KInitEventListSize) {
     if (m_epollfd < 0) {
         LOG_FATAL("epoll_create %d\n", errno);
     }
@@ -40,7 +42,8 @@ void EpollPoller::removeChannel(Channel* channel) {
 void EpollPoller::updateChannel(Channel* channel) {
     const int index = channel->get_index();
     const int fd = channel->get_fd();
-    LOG_INFO("func=%s fd=%d events=%d index=%d\n", __FUNCTION__, fd, channel->get_events(), index);
+    LOG_INFO("%s:%d %s fd=%d events=%d index=%d\n", __FILE__, __LINE__,
+             __FUNCTION__, fd, channel->get_events(), index);
     if (index == kNew || index == kDeleted) {  // 可以新增
         if (index == kNew) {
             m_channel_map[fd] = channel;
@@ -58,9 +61,11 @@ void EpollPoller::updateChannel(Channel* channel) {
 }
 
 Timestamp EpollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
-    LOG_DEBUG("fun=%s fd total count:%lu\n", __FUNCTION__, m_channel_map.size());
-    int eventNums = epoll_wait(m_epollfd, &*m_reventList.begin(),
-                               static_cast<int>(m_reventList.size()), timeoutMs);
+    LOG_DEBUG("fun=%s fd total count:%lu\n", __FUNCTION__,
+              m_channel_map.size());
+    int eventNums =
+        epoll_wait(m_epollfd, &*m_reventList.begin(),
+                   static_cast<int>(m_reventList.size()), timeoutMs);
     int saveErrno = errno;
     Timestamp now(Timestamp::now());
     if (eventNums > 0) {
@@ -86,10 +91,14 @@ Timestamp EpollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
 
 void EpollPoller::update(int op, Channel* channel) {
     epoll_event event;
-    bzero(&event, sizeof(epoll_event));
-    event.events = channel->get_events();
-    event.data.ptr = channel;
+    bzero(&event, sizeof(event));
     int fd = channel->get_fd();
+    event.events = channel->get_events();
+    LOG_INFO("events:%d\n",event.events);
+    LOG_INFO("fd:%d\n",fd);
+    LOG_INFO("m_epollfd:%d\n",m_epollfd);
+    event.data.fd = fd;
+    event.data.ptr = channel;
     if (::epoll_ctl(m_epollfd, op, fd, &event) < 0) {
         if (op == EPOLL_CTL_DEL) {
             LOG_ERROR("epoll_ctl del errno %d\n", errno);
@@ -99,7 +108,8 @@ void EpollPoller::update(int op, Channel* channel) {
     }
 }
 
-void EpollPoller::fillActiveChannels(int eventNums, ChannelList* activeChannels) const {
+void EpollPoller::fillActiveChannels(int eventNums,
+                                     ChannelList* activeChannels) const {
     for (int i = 0; i < eventNums; i++) {
         Channel* channel = static_cast<Channel*>(m_reventList[i].data.ptr);
         channel->set_revents(m_reventList[i].events);

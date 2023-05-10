@@ -16,7 +16,7 @@ Channel::Channel(EventLoop* loop, int fd)
       m_fd(fd),
       m_events(0),
       m_revents(0),
-      m_index(0),
+      m_index(-1),
       m_tied(false) {}
 
 Channel::~Channel() {
