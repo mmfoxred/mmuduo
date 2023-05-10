@@ -1,16 +1,10 @@
-#include <muduo/base/Timestamp.h>
-#include <muduo/net/Buffer.h>
-#include <muduo/net/Callbacks.h>
-#include <muduo/net/EventLoop.h>
-#include <muduo/net/InetAddress.h>
-#include <muduo/net/TcpServer.h>
+#include <mymuduo/TcpServer.h>
 #include <functional>
 #include <iostream>
 #include <string>
 using namespace std;
-using namespace muduo;
-using namespace muduo::net;
 using namespace placeholders;
+
 
 class ChatServer {
 public:
@@ -42,7 +36,10 @@ private:
             // m_loop->quit();
         }
     }
-    //用户读写事件的回调 epoll_wait sockfd recv send
+
+	//服务器处理的事件：读写事件，其中除了新连接（mainLoop中运行）
+	//还有普通读写事件需要处理，那就交给这里了（subLoop）
+    //用户读写事件的回调
     void onMessage(const TcpConnectionPtr& conn, Buffer* buffer,
                    Timestamp time) {
         string buf = buffer->retrieveAllAsString();
@@ -50,12 +47,12 @@ private:
         conn->send(buf);
     }
     TcpServer m_server;
-    EventLoop* m_loop;
+    EventLoop* m_loop; //mainLoop
 };
 
 int main() {
-    EventLoop loop;
-    InetAddress addr("127.0.0.1", 6000);
+    EventLoop loop; //主事件循环 mainLoop
+    InetAddress addr("127.0.0.1", 6000); //服务器要监听的地址
     ChatServer server(&loop, addr, "ChatServer");
     server.start();
     loop.loop();  //相当于epoll_wait
