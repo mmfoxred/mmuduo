@@ -30,5 +30,5 @@ done
 cp `pwd`/build/libmymuduo.so /usr/lib/mymuduo/
 
 #刷新缓存
-export LD_LIBRARY_PATH=/usr/lib/mymuduo:$LD_LIBRARY_PATH
-sudo ldconfig -v
+#export LD_LIBRARY_PATH=/usr/lib/mymuduo:$LD_LIBRARY_PATH
+#没用，因为export只是导入了运行install.sh的终端中了，新运行的终端还是没有这项
