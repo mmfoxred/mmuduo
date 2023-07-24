@@ -66,7 +66,7 @@ void Channel::update() {
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime) {
-    LOG_INFO("channel handle revents:%d\n", m_revents);
+    //LOG_INFO("channel handle revents:%d\n", m_revents);
     if ((m_revents & EPOLLHUP) && !(m_revents & EPOLLIN)) {
         if (m_closeCallBack) {
             m_closeCallBack();

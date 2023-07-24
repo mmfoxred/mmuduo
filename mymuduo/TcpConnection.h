@@ -1,8 +1,11 @@
 #pragma once
 
+#include <netinet/tcp.h>
 #include "Buffer.h"
 #include "Callbacks.h"
+#include "CircularBuffer.h"
 #include "InetAddress.h"
+#include "Socket.h"
 #include "Timestamp.h"
 #include "noncopyable.h"
 
@@ -32,6 +35,12 @@ public:
     const InetAddress& peerAddress() const { return m_peerAddr; }
 
     bool connected() const { return m_state == kConnected; }
+    void setTcpNoDelay(bool on) {
+        int optval = on ? 1 : 0;
+        ::setsockopt(m_socket->get_fd(), IPPROTO_TCP, TCP_NODELAY, &optval,
+                     static_cast<socklen_t>(sizeof optval));
+        // FIXME CHECK
+    }
 
     // 发送数据
     void send(const std::string& buf);
@@ -67,7 +76,7 @@ private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
     void setState(StateE state) { m_state = state; }
 
-	//传给Channel的回调，在TcpConnection构造函数中使用
+    //传给Channel的回调，在TcpConnection构造函数中使用
     void handleRead(Timestamp receiveTime);
     void handleWrite();
     void handleClose();
@@ -88,15 +97,15 @@ private:
     const InetAddress m_localAddr;
     const InetAddress m_peerAddr;
 
-	//前四个是外部传进来的，外部 -> TcpServer -> TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
-    ConnectionCallback m_connectionCallback; 
-    MessageCallback m_messageCallback; 
+    //前四个是外部传进来的，外部 -> TcpServer -> TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
+    ConnectionCallback m_connectionCallback;
+    MessageCallback m_messageCallback;
     WriteCompleteCallback m_writeCompleteCallback;
     HighWaterMarkCallback m_highWaterMarkCallback;
-	//实际是TcpServer::removeConnection，也是TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
-	CloseCallback m_closeCallback;
+    //实际是TcpServer::removeConnection，也是TcpServer::newConnection()中 调用了TcpConnection::set...Callback()
+    CloseCallback m_closeCallback;
     size_t m_highWaterMark;
 
-    Buffer m_inputBuffer;   // 接收数据的缓冲区
-    Buffer m_outputBuffer;  // 发送数据的缓冲区
+    CircularBuffer m_inputBuffer;   // 接收数据的缓冲区
+    CircularBuffer m_outputBuffer;  // 发送数据的缓冲区
 };

@@ -73,8 +73,8 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
 	//connName 是 TcpServer name + ipv4:port + 连接序号
 	std::string connName = m_name + buf;
 
-    LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s \n",
-             m_name.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
+    // LOG_INFO("TcpServer::newConnection [%s] - new connection [%s] from %s \n",
+    //          m_name.c_str(), connName.c_str(), peerAddr.toIpPort().c_str());
 
     // 通过sockfd获取其绑定的本机的ip地址和端口信息
     sockaddr_in local;
@@ -114,8 +114,8 @@ void TcpServer::removeConnection(const TcpConnectionPtr& conn) {
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn) {
-    LOG_INFO("TcpServer::removeConnectionInLoop [%s] - connection %s\n",
-             m_name.c_str(), conn->name().c_str());
+    // LOG_INFO("TcpServer::removeConnectionInLoop [%s] - connection %s\n",
+    //          m_name.c_str(), conn->name().c_str());
 
     m_connections.erase(conn->name());
     EventLoop* ioLoop = conn->getLoop();

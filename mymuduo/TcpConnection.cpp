@@ -41,13 +41,13 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& nameArg,
     m_channel->setCloseCallBack(std::bind(&TcpConnection::handleClose, this));
     m_channel->setErrorCallBack(std::bind(&TcpConnection::handleError, this));
 
-    LOG_INFO("TcpConnection::ctor[%s] at fd=%d\n", m_name.c_str(), sockfd);
+    //LOG_INFO("TcpConnection::ctor[%s] at fd=%d\n", m_name.c_str(), sockfd);
     m_socket->set_keepAlive(true);
 }
 
 TcpConnection::~TcpConnection() {
-    LOG_INFO("TcpConnection::dtor[%s] at fd=%d state=%d \n", m_name.c_str(),
-             m_channel->get_fd(), (int)m_state);
+    // LOG_INFO("TcpConnection::dtor[%s] at fd=%d state=%d \n", m_name.c_str(),
+    //          m_channel->get_fd(), (int)m_state);
 }
 
 //实际调用的是TcpConnection::sendInLoop
@@ -105,8 +105,8 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
     if (!faultError && remaining > 0) {
         // 目前发送缓冲区剩余的待发送数据的长度
         size_t oldLen = m_outputBuffer.readableBytes();
-		//触发了高水位情况
-		if (oldLen + remaining >= m_highWaterMark && oldLen < m_highWaterMark &&
+        //触发了高水位情况
+        if (oldLen + remaining >= m_highWaterMark && oldLen < m_highWaterMark &&
             m_highWaterMarkCallback) {
             m_eventLoop->queueInLoop(std::bind(m_highWaterMarkCallback,
                                                shared_from_this(),
@@ -114,7 +114,8 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
         }
         m_outputBuffer.append((char*)data + nwrote, remaining);
         if (!m_channel->isWriting()) {
-            m_channel->enableWriting();  // 这里一定要注册channel的写事件，否则poller不会给channel通知epollout
+            m_channel
+                ->enableWriting();  // 这里一定要注册channel的写事件，否则poller不会给channel通知epollout
         }
     }
 }
@@ -182,17 +183,17 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
 void TcpConnection::handleWrite() {
     if (m_channel->isWriting()) {
         int savedErrno = 0;
-		//写完整个readableBytes
+        //写完整个readableBytes
         ssize_t n = m_outputBuffer.writeFd(m_channel->get_fd(), &savedErrno);
         if (n > 0) {
-			//置位readIndex,handleRead()中也有置位操作，但是封装在readFd()中
-            m_outputBuffer.retrieve(n); 
+            //置位readIndex,handleRead()中也有置位操作，但是封装在readFd()中
+            m_outputBuffer.retrieve(static_cast<size_t>(n));
 
-			//外部可读大小为0，表示读完了
-			if (m_outputBuffer.readableBytes() == 0) {
-                m_channel->disableWriting(); //那么就取消写事件
-				//如果注册了写完成事件，还可以处理
-				if (m_writeCompleteCallback) {
+            //外部可读大小为0，表示读完了
+            if (m_outputBuffer.readableBytes() == 0) {
+                m_channel->disableWriting();  //那么就取消写事件
+                //如果注册了写完成事件，还可以处理
+                if (m_writeCompleteCallback) {
                     // 唤醒m_eventLoop对应的thread线程，执行回调
                     m_eventLoop->queueInLoop(
                         std::bind(m_writeCompleteCallback, shared_from_this()));
@@ -211,14 +212,15 @@ void TcpConnection::handleWrite() {
 }
 
 void TcpConnection::handleClose() {
-    LOG_INFO("TcpConnection::handleClose fd=%d state=%d \n",
-             m_channel->get_fd(), (int)m_state);
+    // LOG_INFO("TcpConnection::handleClose fd=%d state=%d \n",
+    //          m_channel->get_fd(), (int)m_state);
     setState(kDisconnected);
     m_channel->disableAll();
 
     TcpConnectionPtr connPtr(shared_from_this());
     m_connectionCallback(connPtr);  // 执行连接关闭的回调
-    m_closeCallback(connPtr);  // 关闭连接的回调  执行的是TcpServer::removeConnection回调方法
+    m_closeCallback(
+        connPtr);  // 关闭连接的回调  执行的是TcpServer::removeConnection回调方法
 }
 
 void TcpConnection::handleError() {

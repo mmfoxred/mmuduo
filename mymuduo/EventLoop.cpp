@@ -62,7 +62,7 @@ EventLoop::~EventLoop() {
 void EventLoop::loop() {
     m_looping = true;
     m_quit = false;
-    LOG_INFO("EventLoop %p start looping\n", this);
+    //LOG_INFO("EventLoop %p start looping\n", this);
     while (!m_quit) {
         m_activeChannels.clear(); //上次已处理的活动事件对应的Channels清理掉
         m_pollReturnTime = m_poller->poll(kPollTimeMs, &m_activeChannels); //调用Epoll_wait阻塞，将活动事件返回到m_activeChannels中
@@ -71,7 +71,7 @@ void EventLoop::loop() {
         }
         doPendingFunctors();
     }
-    LOG_INFO("EventLoop %p stop looping\n", this);
+    //LOG_INFO("EventLoop %p stop looping\n", this);
     m_looping = false;
 }
 

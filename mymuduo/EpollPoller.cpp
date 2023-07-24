@@ -31,7 +31,7 @@ EpollPoller::~EpollPoller() {
 
 void EpollPoller::removeChannel(Channel* channel) {
     const int fd = channel->get_fd();
-    LOG_INFO("fun=%s fd=%d\n", __FUNCTION__, fd);
+    //LOG_INFO("fun=%s fd=%d\n", __FUNCTION__, fd);
     m_channel_map.erase(fd);
     if (channel->get_index() == kAdded) {
         update(EPOLL_CTL_DEL, channel);
@@ -42,8 +42,8 @@ void EpollPoller::removeChannel(Channel* channel) {
 void EpollPoller::updateChannel(Channel* channel) {
     const int index = channel->get_index();
     const int fd = channel->get_fd();
-    LOG_INFO("%s:%d %s fd=%d events=%d index=%d\n", __FILE__, __LINE__,
-             __FUNCTION__, fd, channel->get_events(), index);
+    // LOG_INFO("%s:%d %s fd=%d events=%d index=%d\n", __FILE__, __LINE__,
+    //          __FUNCTION__, fd, channel->get_events(), index);
     if (index == kNew || index == kDeleted) {  // 可以新增
         if (index == kNew) {
             m_channel_map[fd] = channel;
@@ -94,9 +94,9 @@ void EpollPoller::update(int op, Channel* channel) {
     bzero(&event, sizeof(event));
     int fd = channel->get_fd();
     event.events = channel->get_events();
-    LOG_INFO("events:%d\n",event.events);
-    LOG_INFO("fd:%d\n",fd);
-    LOG_INFO("m_epollfd:%d\n",m_epollfd);
+    //LOG_INFO("events:%d\n",event.events);
+    //LOG_INFO("fd:%d\n",fd);
+    //LOG_INFO("m_epollfd:%d\n",m_epollfd);
     event.data.fd = fd;
     event.data.ptr = channel;
     if (::epoll_ctl(m_epollfd, op, fd, &event) < 0) {
