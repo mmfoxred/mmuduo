@@ -49,7 +49,6 @@ EventLoop::EventLoop()
     //使得该EventLoop能被wakeUp
     m_wakeUpChannel->setReadCallBack(std::bind(&EventLoop::handRead, this));
     m_wakeUpChannel->enableReading();
-    printf("timerQueue: %p\n", m_timerQueue.get());
 }
 
 EventLoop::~EventLoop() {
