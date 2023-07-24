@@ -15,8 +15,10 @@ class EventLoopThread : private noncopyable {
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;
 
-    EventLoopThread(const ThreadInitCallback& initCallback,
-                    const std::string& name);
+    //空的函数吗？ ThreadInitCallback()
+    EventLoopThread(
+        const ThreadInitCallback& initCallback = ThreadInitCallback(),
+        const std::string& name = std::string());
     ~EventLoopThread();
 
     EventLoop* startLoop();
@@ -24,11 +26,12 @@ public:
 private:
     void threadFunc();  //线程需要执行的函数，作为线程的初始化变量
 
-	//外部传进m_threadInitCallback，用来在线程初始化时做的事情
-	//来源：外部传入->TcpServer::m_threadInitCallback->TcpServer::start()
-	//->m_threadPool->start(m_threadInitCallback)->EventLoopThreadPool::start(const ThreadInitCallback& cb)
-	//->EventLoopThread* t = new EventLoopThread(cb, buf);
-	//->threadFunc()-> m_threadInitCallback(&loop);  
+    //外部传进m_threadInitCallback，用来在线程初始化时做的事情
+    //来源：外部传入->TcpServer::m_threadInitCallback->TcpServer::start()
+    //->m_threadPool->start(m_threadInitCallback)->EventLoopThreadPool::start(const
+    // ThreadInitCallback& cb)
+    //->EventLoopThread* t = new EventLoopThread(cb, buf);
+    //->threadFunc()-> m_threadInitCallback(&loop);
     ThreadInitCallback m_threadInitCallback;
     bool m_exiting;
     EventLoop* m_loop;

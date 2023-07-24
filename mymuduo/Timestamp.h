@@ -2,8 +2,12 @@
 #include <string>
 class Timestamp {
 public:
-    Timestamp();
-    Timestamp(long secondsSinceEpoch);
+    Timestamp() : m_microSecondsSinceEpoch(0){};
+    explicit Timestamp(int64_t microSecondsSinceEpochArg)
+        : m_microSecondsSinceEpoch(microSecondsSinceEpochArg) {}
+    void swap(Timestamp& that) {
+        std::swap(m_microSecondsSinceEpoch, that.m_microSecondsSinceEpoch);
+    }
     static Timestamp now();
 
     bool valid() const { return m_microSecondsSinceEpoch > 0; }
@@ -18,7 +22,6 @@ public:
     }
 
 private:
-    long m_secondSinceEpoch;
     long m_microSecondsSinceEpoch;
 };
 

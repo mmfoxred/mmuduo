@@ -3,12 +3,14 @@
 #include "CurrentThread.h"
 #include "Logger.h"
 #include "Poller.h"
+#include "TimerQueue.h"
 
 #include <sys/eventfd.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -32,6 +34,7 @@ EventLoop::EventLoop()
       //将该m_wakeUpfd与Channel绑定在一起,以后m_wakeUpchannel就代表着m_wakeUpFd的事件集合
       m_wakeUpChannel(new Channel(this, m_wakeUpFd)),
       m_poller(Poller::newDefaultPoller(this)),
+      m_timerQueue(new TimerQueue(this)),
       m_callingPendingFunctors(false),
       m_looping(false),
       m_quit(false),
@@ -46,6 +49,7 @@ EventLoop::EventLoop()
     //使得该EventLoop能被wakeUp
     m_wakeUpChannel->setReadCallBack(std::bind(&EventLoop::handRead, this));
     m_wakeUpChannel->enableReading();
+    printf("timerQueue: %p\n", m_timerQueue.get());
 }
 
 EventLoop::~EventLoop() {
@@ -109,6 +113,24 @@ void EventLoop::queueInLoop(Functor cb) {
     if (!isInLoopThread() || m_callingPendingFunctors) {
         wakeUp();
     }
+}
+
+TimerId EventLoop::runAt(Timestamp time, TimerCallback cb) {
+    return m_timerQueue->addTimer(std::move(cb), time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, TimerCallback cb) {
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, std::move(cb));
+}
+
+TimerId EventLoop::runEvery(double interval, TimerCallback cb) {
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return m_timerQueue->addTimer(std::move(cb), time, interval);
+}
+
+void EventLoop::cancel(TimerId timerId) {
+    return m_timerQueue->cancel(timerId);
 }
 
 void EventLoop::updateChannel(Channel* channel) {

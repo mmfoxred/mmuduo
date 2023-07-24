@@ -2,6 +2,7 @@
 #include <strings.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include <cstdio>
 
 #include "EventLoop.h"
 #include "Logger.h"
@@ -87,6 +88,7 @@ TimerQueue::~TimerQueue() {
 TimerId TimerQueue::addTimer(TimerCallback cb, Timestamp when,
                              double interval) {
     Timer* timer = new Timer(std::move(cb), when, interval);
+    printf("this:%p\n", this);
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return TimerId(timer, timer->sequence());
 }

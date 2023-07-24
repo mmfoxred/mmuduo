@@ -7,11 +7,13 @@
 #include <vector>
 
 #include "CurrentThread.h"
+#include "TimerId.h"
 #include "Timestamp.h"
 #include "noncopyable.h"
 
 class Channel;
 class Poller;
+class TimerQueue;
 
 // poll阻塞等待新事件；调用channel处理新事件
 // Channel和Poller的使用者、控制者
@@ -31,6 +33,11 @@ public:
     void runInLoop(Functor cb);
     //加入其他线程的队列，并唤醒所在线程
     void queueInLoop(Functor cb);
+    //定时队列
+    TimerId runAt(Timestamp time, TimerCallback cb);
+    TimerId runAfter(double delay, TimerCallback cb);
+    TimerId runEvery(double interval, TimerCallback cb);
+    void cancel(TimerId timerId);
     //事件返回时间
     Timestamp pollReturnTime() const { return m_pollReturnTime; }
 
@@ -60,6 +67,7 @@ private:
     std::unique_ptr<Channel> m_wakeUpChannel;
 
     std::unique_ptr<Poller> m_poller;
+    std::unique_ptr<TimerQueue> m_timerQueue;
     Timestamp m_pollReturnTime;  // Poller返回发生的channels事件的时间
     ChannelList m_activeChannels;
     void doPendingFunctors();  //执行回调
