@@ -23,3 +23,5 @@ using MessageCallback =
 
 using HighWaterMarkCallback =
     std::function<void(const ConnectionPtr&, std::size_t)>;
+
+using TimerCallback = std::function<void()>;

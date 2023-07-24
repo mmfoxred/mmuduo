@@ -13,8 +13,8 @@
 class Channel;
 class Poller;
 
-//poll阻塞等待新事件；调用channel处理新事件
-//Channel和Poller的使用者、控制者
+// poll阻塞等待新事件；调用channel处理新事件
+// Channel和Poller的使用者、控制者
 class EventLoop : noncopyable {
 public:
     using Functor = std::function<void()>;
@@ -34,7 +34,7 @@ public:
     //事件返回时间
     Timestamp pollReturnTime() const { return m_pollReturnTime; }
 
-    //Channel处理，实际交给Poller处理
+    // Channel处理，实际交给Poller处理
     void updateChannel(Channel* channel);
     void removeChannel(Channel* channel);
     bool hasChannel(Channel* channel);
@@ -45,7 +45,14 @@ public:
         return m_threadId == CurrentThread::getTid();
     }
 
+    void assertInLoopThread() {
+        if (!isInLoopThread()) {
+            abortNotInLoopThread();
+        }
+    }
+
 private:
+    void abortNotInLoopThread();
     using ChannelList = std::vector<Channel*>;
 
     int m_wakeUpFd;   //通过该变量唤醒subloop处理channel
@@ -53,7 +60,7 @@ private:
     std::unique_ptr<Channel> m_wakeUpChannel;
 
     std::unique_ptr<Poller> m_poller;
-    Timestamp m_pollReturnTime;  //Poller返回发生的channels事件的时间
+    Timestamp m_pollReturnTime;  // Poller返回发生的channels事件的时间
     ChannelList m_activeChannels;
     void doPendingFunctors();  //执行回调
 
