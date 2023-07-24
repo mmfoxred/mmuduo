@@ -163,7 +163,7 @@ void EventLoop::doPendingFunctors() {
 
 void EventLoop::abortNotInLoopThread() {
     LOG_FATAL(
-        "EventLoop::abortNotInLoopThread - EventLoop %x was created in "
+        "EventLoop::abortNotInLoopThread - EventLoop %p was created in "
         "threadId_ = %d, current thread id = %d\n",
         this, m_threadId, CurrentThread::getTid());
 }
