@@ -1,5 +1,5 @@
-# TARGET=libmymuduo.so
-TARGET=server
+TARGET=libmymuduo.so
+# TARGET=server
 OBJS:= $(patsubst %.cpp,%.o,$(wildcard ./*.cpp))	#当前路径的.cpp转换为.o
 
 LDFLAGS:= -shared
