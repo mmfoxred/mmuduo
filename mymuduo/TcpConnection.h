@@ -3,7 +3,7 @@
 #include <netinet/tcp.h>
 #include "Buffer.h"
 #include "Callbacks.h"
-#include "CircularBuffer.h"
+#include "kfifo.h"
 #include "InetAddress.h"
 #include "Socket.h"
 #include "Timestamp.h"
@@ -106,6 +106,6 @@ private:
     CloseCallback m_closeCallback;
     size_t m_highWaterMark;
 
-    CircularBuffer m_inputBuffer;   // 接收数据的缓冲区
-    CircularBuffer m_outputBuffer;  // 发送数据的缓冲区
+    Kfifo m_inputBuffer;   // 接收数据的缓冲区
+    Kfifo m_outputBuffer;  // 发送数据的缓冲区
 };

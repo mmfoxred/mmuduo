@@ -5,7 +5,7 @@
 #include <memory>
 
 class Buffer;
-class CircularBuffer;
+class Kfifo;
 class TcpConnection;
 class Timestamp;
 class EventLoop;
@@ -19,7 +19,7 @@ using WriteCompleteCallback = std::function<void(const ConnectionPtr&)>;
 // using MessageCallback =
 //     std::function<void(const ConnectionPtr&, Buffer*, Timestamp)>;
 using MessageCallback =
-    std::function<void(const ConnectionPtr&, CircularBuffer*, Timestamp)>;
+    std::function<void(const ConnectionPtr&, Kfifo*, Timestamp)>;
 
 using HighWaterMarkCallback =
     std::function<void(const ConnectionPtr&, std::size_t)>;

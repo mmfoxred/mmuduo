@@ -34,6 +34,8 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& nameArg,
       m_peerAddr(peerAddr),
       m_highWaterMark(64 * 1024 * 1024)  // 64M
 {
+    m_inputBuffer.initBuffer();
+    m_outputBuffer.initBuffer();
     // 下面给channel设置相应的回调函数，poller给channel通知感兴趣的事件发生了，channel会回调相应的操作函数
     m_channel->setReadCallBack(
         std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
@@ -77,7 +79,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
     }
 
     // 表示m_channel第一次开始写数据，而且缓冲区没有待发送数据
-    if (!m_channel->isWriting() && m_outputBuffer.readableBytes() == 0) {
+    if (!m_channel->isWriting() && m_outputBuffer.getReadableLen() == 0) {
         nwrote = ::write(m_channel->get_fd(), data, len);
         if (nwrote >= 0) {
             remaining = len - nwrote;
@@ -104,7 +106,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
     // 也就是调用TcpConnection::handleWrite方法，把发送缓冲区中的数据全部发送完成
     if (!faultError && remaining > 0) {
         // 目前发送缓冲区剩余的待发送数据的长度
-        size_t oldLen = m_outputBuffer.readableBytes();
+        size_t oldLen = m_outputBuffer.getReadableLen();
         //触发了高水位情况
         if (oldLen + remaining >= m_highWaterMark && oldLen < m_highWaterMark &&
             m_highWaterMarkCallback) {
@@ -112,7 +114,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len) {
                                                shared_from_this(),
                                                oldLen + remaining));
         }
-        m_outputBuffer.append((char*)data + nwrote, remaining);
+        m_outputBuffer.writeBuffer((char*)data + nwrote, remaining);
         if (!m_channel->isWriting()) {
             m_channel
                 ->enableWriting();  // 这里一定要注册channel的写事件，否则poller不会给channel通知epollout
@@ -187,10 +189,10 @@ void TcpConnection::handleWrite() {
         ssize_t n = m_outputBuffer.writeFd(m_channel->get_fd(), &savedErrno);
         if (n > 0) {
             //置位readIndex,handleRead()中也有置位操作，但是封装在readFd()中
-            m_outputBuffer.retrieve(static_cast<size_t>(n));
+            // m_outputBuffer.retrieve(static_cast<size_t>(n));
 
             //外部可读大小为0，表示读完了
-            if (m_outputBuffer.readableBytes() == 0) {
+            if (m_outputBuffer.getReadableLen() == 0) {
                 m_channel->disableWriting();  //那么就取消写事件
                 //如果注册了写完成事件，还可以处理
                 if (m_writeCompleteCallback) {
